@@ -2,7 +2,7 @@
 
 title: francescomuc.io
 baseurl: / # name of the repository
-email: your@email.com
+email: info@francescomuc.io
 
 
 
@@ -38,4 +38,8 @@ exclude:
 - README.md
 
 
-gems: [jekyll-seo-tag, jekyll-paginate]
+plugins: 
+- jekyll-seo-tag
+- jekyll-paginate
+- jekyll-feed
+- jekyll-sitemap
