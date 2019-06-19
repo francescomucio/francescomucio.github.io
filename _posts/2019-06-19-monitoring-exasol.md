@@ -4,6 +4,10 @@ title:  "Monitoring Exasol"
 date:   2019-06-19 06:34:56 +0200
 tags: [exasol, sql]
 ---
+
+
+
+
 ```sql
 select count(1) over (partition by ds.status) cnt_status,
        m.status,

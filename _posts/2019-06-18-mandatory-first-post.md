@@ -10,5 +10,7 @@ I'm about to start a new adventure and I heard that a personal website can be a 
  What this page will be about? Mostly things I do at work, which means data and code, I don't think people will be interesting in my rants, 
  not until I make them into a full standup routine. 
 
+So not much else to add here.
+
 What I am trying to learn at moment:
 - How to use [Jekill](https://jekyllrb.com/).
