@@ -18,14 +18,18 @@ The main point for me is to have a very quick overview of the number of queries 
 
 Once I have identified a bad session, I go checking its profile to see which query step (a join? a grouping operation?) is problematic, then I tried to rewrite it in a better/nicer/more performing way. When I am happy it is finally time to contact my colleague and explain what I did to make it's query faster or to understand the purpose of the query to find a different solution.
 
+As you can imagine, while this is very nice in theory, often a database administrator wants just to terminate the offending query as soon as possible to keep the database healthy and responsive. Would not be possible to automatically kill the sessions passing the limits assigned to the user? That was the job for the above mentioned watchdog.  
+
 ```sql
   with sessions as ( select s.session_id,
                             s.stmt_id,
                             s.user_name,
                             s.status,
                             s.command_name,
-                            right(s.duration, 2) + 60 * regexp_substr(s.duration, '(?<=:)[0-9]{2}(?=:)') +
-                            3600 * regexp_substr(s.duration, '^[0-9]+(?=:)') duration,
+                            right(s.duration, 2) + 
+                            60 * regexp_substr(s.duration, '(?<=:)[0-9]{2}(?=:)') +
+                            3600 * regexp_substr(s.duration, '^[0-9]+(?=:)') 
+                                                                             duration,
                             s.temp_db_ram,
                             s.sql_text,
                             s.priority,
@@ -47,11 +51,14 @@ Once I have identified a bad session, I go checking its profile to see which que
                             else 0
                      end idle_duration,
                      case
-                            when status in ('COMPILE', 'PREPARE SQL') then duration
+                            when status in ('COMPILE', 
+                                            'PREPARE SQL') then duration
                             else 0
                      end compile_duration,
                      case
-                            when status not in ('IDLE', 'COMPILE', 'PREPARE SQL') then duration
+                            when status not in ('IDLE', 
+                                                'COMPILE', 
+                                                'PREPARE SQL') then duration
                             else 0
                      end query_duration,
                      case
