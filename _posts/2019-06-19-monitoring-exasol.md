@@ -4,35 +4,21 @@ title:  "Monitoring Exasol"
 date:   2019-06-19 06:34:56 +0200
 tags: [exasol, sql]
 ---
+Who is slowing down this database? Not sure about you, but I got used to the speed of Exasol... except when it is not that fast. 
 
+Once at a conference I saw a booth where they were giving away stickers and t-shirt with "I am only here because my query is running". Now I am a sucker for conference swag, but my reaction was more "What the hell is wrong with you people? Go fix your query!" I didn't get that t-shirt. I am still upset thinking about it.
 
+Having and in-memory MPP database means that queries should return results in an handfull of seconds if you are not exporting huge amount of data or doing something stupid. When someone is doing something stupid on a shared system all the users will suffer, which is not nice. 
 
+Because I had my share of not nice queries to check and kill in the past, I ended up creating an [Exasol Watchdog](https://www.slideshare.net/slideshow/embed_code/key/hQtDjc2JnLdxtO) at Zalando. Now this will be the subject of a future post (when I will probably rewrite the Watchdog in a way that satisfies me more), but I wanted to share a query I wrote recently for a personal project to see what is happening on my database.
+
+I am using it quite often, so I put it in a view and call it even quicker using the Datagrip shortcuts.
+
+The main point for me is to have a very quick overview of the number of queries running, the users running queries and the users with more concurrent sessions. Sorting the session by execution time gives me a good idea of who could be the culprit and I am still not sure the next step is to look at the `temp_db_ram` column.
+
+Once I have identified a bad session, I go checking its profile to see which query step (a join? a grouping operation?) is problematic, then I tried to rewrite it in a better/nicer/more performing way. When I am happy it is finally time to contact my colleague and explain what I did to make it's query faster or to understand the purpose of the query to find a different solution.
 
 ```sql
-select count(1) over (partition by ds.status) cnt_status,
-       m.status,
-       count(1) over (partition by m.user_name, ds.status) cnt_user_status,
-       m.user_name,
-       ds.priority,
-       ds.resources,
-       ds.activity,
-       m.command_name,
-       check_query_duration,
-       check_temp_db_ram,
-       check_idle_duration,
-       check_compile_duration,
-       check_query_duration,
-       check_passed_query_length,
-       m.session_id,
-       m.stmt_id,
-       m.sql_text
-  from zalando_util.swd_session_monitor m
-  inner join sys.exa_dba_sessions       ds
-             on m.session_id = ds.session_id
- order by ds.status,
-          m.user_name,
-          m.check_query_duration desc;
-  
   with sessions as ( select s.session_id,
                             s.stmt_id,
                             s.user_name,
@@ -45,7 +31,8 @@ select count(1) over (partition by ds.status) cnt_status,
                             s.priority,
                             s.resources,
                             s.activity
-                       from sys.exa_dba_sessions s ),
+                       from sys.exa_dba_sessions s 
+       ),
        checks   as (
               select session_id,
                      stmt_id,
@@ -58,22 +45,23 @@ select count(1) over (partition by ds.status) cnt_status,
                      case
                             when status = 'IDLE' then duration
                             else 0
-                     end check_idle_duration,
+                     end idle_duration,
                      case
                             when status in ('COMPILE', 'PREPARE SQL') then duration
                             else 0
-                     end check_compile_duration,
+                     end compile_duration,
                      case
                             when status not in ('IDLE', 'COMPILE', 'PREPARE SQL') then duration
                             else 0
-                     end check_query_duration,
+                     end query_duration,
                      case
                             when length(sql_text) = 2000000 then 1
                             else 0
-                     end check_passed_query_length,
-                     temp_db_ram check_temp_db_ram,
+                     end passed_query_length,
+                     temp_db_ram temp_db_ram,
                      sql_text
-                from sessions )
+                from sessions 
+       )
 select count(1) over (partition by c.status) cnt_status,
        c.status,
        count(1) over (partition by c.user_name, c.status) cnt_user_status,
@@ -83,18 +71,18 @@ select count(1) over (partition by c.status) cnt_status,
        c.resources,
        c.activity,
        c.command_name,
-       c.check_query_duration,
-       c.check_temp_db_ram,
-       c.check_idle_duration,
-       c.check_compile_duration,
-       c.check_query_duration,
-       c.check_passed_query_length,
+       c.query_duration,
+       c.temp_db_ram,
+       c.idle_duration,
+       c.compile_duration,
+       c.query_duration,
+       c.passed_query_length,
        c.session_id,
        c.stmt_id,
        c.sql_text
   from checks c
  order by c.status,
           c.user_name,
-          c.check_query_duration desc
+          c.query_duration desc
 ;
 ```
