@@ -16,7 +16,7 @@ I am using it quite often, so I put it in a view and call it even quicker using 
 
 The main point for me is to have a very quick overview of the number of queries running, the users running queries and the users with more concurrent sessions. Sorting the session by execution time gives me a good idea of who could be the culprit and I am still not sure the next step is to look at the `temp_db_ram` column.
 
-Once I have identified a bad session, I go checking its profile to see which query step (a join? a grouping operation?) is problematic, then I tried to rewrite it in a better/nicer/more performing way. When I am happy it is finally time to contact my colleague and explain what I did to make it's query faster or to understand the purpose of the query to find a different solution.
+Once I have identified a bad session, I go checking its profile to see which query step (a join? a grouping operation?) is problematic, then I tried to rewrite it in a ~~better~~ ~~nicer~~ more performing way. When I am happy it is finally time to contact my colleague and explain what I did to make its query faster or to understand the purpose of the query to find a different solution.
 
 As you can imagine, while this is very nice in theory, often a database administrator wants just to terminate the offending query as soon as possible to keep the database healthy and responsive. Would not be possible to automatically kill the sessions passing the limits assigned to the user? That was the job for the above mentioned watchdog.  
 
